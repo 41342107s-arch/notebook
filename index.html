@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f4f0ff">
+<title>課堂拾光｜課堂筆記</title>
+<style>
+  /* 基礎設定：統一盒模型、字體與可視焦點 */
+  * { box-sizing: border-box; }
+  input, select, textarea { max-width: 100%; }
+  :root {
+    --ink: #252344;
+    --muted: #77758e;
+    --purple: #6757c8;
+    --purple-dark: #5142ad;
+    --lavender: #eeeaff;
+    --paper: #ffffff;
+    --line: #e7e3f3;
+    --bg: #f6f4fc;
+    --mint: #dff5eb;
+    --peach: #fff0df;
+    --danger: #b33d58;
+    --shadow: 0 14px 38px rgba(54, 43, 107, .09);
+  }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 8% 4%, rgba(255, 225, 186, .55), transparent 23rem),
+      radial-gradient(circle at 96% 20%, rgba(213, 207, 255, .55), transparent 25rem),
+      var(--bg);
+    font-family: "Microsoft JhengHei", "微軟正黑體", system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+    outline: 3px solid rgba(103, 87, 200, .35);
+    outline-offset: 2px;
+  }
+  .page { width: min(1180px, calc(100% - 36px)); margin: 0 auto; padding: 34px 0 48px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 26px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 48px; height: 48px; display: grid; place-items: center;
+    border-radius: 16px; background: var(--purple); color: white; font-size: 24px;
+    box-shadow: 0 8px 18px rgba(103, 87, 200, .25);
+  }
+  .brand h1 { font-size: clamp(22px, 3vw, 29px); margin: 0; letter-spacing: .04em; }
+  .brand p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .top-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+  .btn {
+    border: 0; border-radius: 12px; padding: 10px 15px; font-weight: 700;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { color: white; background: var(--purple); }
+  .btn-primary:hover { background: var(--purple-dark); }
+  .btn-soft { color: var(--purple-dark); background: var(--lavender); }
+  .btn-plain { color: var(--muted); background: #f2f0f8; }
+  .btn-danger { color: var(--danger); background: #fff0f2; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(300px, .88fr); gap: 22px; align-items: start; }
+  .panel { background: rgba(255,255,255,.94); border: 1px solid rgba(231,227,243,.9); border-radius: 22px; box-shadow: var(--shadow); }
+  .editor { padding: 25px; }
+  .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  .panel-heading h2 { margin: 0; font-size: 20px; }
+  .eyebrow { color: var(--purple); font-size: 11px; font-weight: 800; letter-spacing: .13em; }
+  .field { margin-bottom: 15px; }
+  .field label { display: block; font-weight: 700; font-size: 13px; margin: 0 0 7px; }
+  .field input, .field select, .field textarea, .searchbox input, .filter-select {
+    width: 100%; border: 1px solid var(--line); border-radius: 12px; background: #fcfbff;
+    padding: 11px 12px; color: var(--ink); min-width: 0;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus, .searchbox input:focus, .filter-select:focus {
+    outline: none; border-color: #9b8fe0; box-shadow: 0 0 0 3px rgba(103,87,200,.1);
+  }
+  .field textarea { min-height: 230px; resize: vertical; line-height: 1.75; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .editor-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 17px; }
+  .hint { color: var(--muted); font-size: 12px; line-height: 1.6; }
+  .status { min-height: 22px; margin-top: 10px; font-size: 13px; color: #347a5c; }
+  .status.error { color: var(--danger); }
+  .side { display: grid; gap: 18px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat { padding: 16px 13px; border-radius: 17px; background: white; border: 1px solid var(--line); }
+  .stat:nth-child(1) { background: #f0edff; }
+  .stat:nth-child(2) { background: #eaf8f1; }
+  .stat:nth-child(3) { background: #fff4e8; }
+  .stat strong { display: block; font-size: 26px; line-height: 1.2; }
+  .stat span { color: var(--muted); font-size: 12px; }
+  .list-panel { padding: 20px; }
+  .list-toolbar { display: flex; gap: 9px; margin: 15px 0 13px; }
+  .searchbox { flex: 1; min-width: 0; position: relative; }
+  .searchbox input { padding-left: 36px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .filter-select { width: auto; min-width: 112px; }
+  .note-list { display: grid; gap: 10px; max-height: 590px; overflow: auto; padding-right: 2px; }
+  .note-card {
+    border: 1px solid var(--line); border-radius: 15px; padding: 14px 15px; background: #fff;
+    text-align: left; width: 100%; color: inherit; transition: border .15s, transform .15s, box-shadow .15s;
+  }
+  .note-card:hover { border-color: #b7adeb; transform: translateY(-1px); }
+  .note-card.active { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(103,87,200,.10); }
+  .note-card-top { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+  .note-card h3 { margin: 0; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+  .note-date { white-space: nowrap; color: var(--muted); font-size: 11px; }
+  .note-preview { margin: 7px 0 10px; color: #69677e; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+  .tag { display: inline-block; background: var(--lavender); color: var(--purple-dark); padding: 3px 8px; border-radius: 99px; font-size: 10px; margin-right: 4px; }
+  .empty { text-align: center; color: var(--muted); padding: 32px 12px; line-height: 1.8; }
+  .empty .emoji { font-size: 32px; display: block; margin-bottom: 8px; }
+  .list-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 13px; flex-wrap: wrap; }
+  .preview-panel { padding: 21px; }
+  .preview-content { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.85; color: #4f4d66; font-size: 14px; }
+  .preview-title { margin: 5px 0 8px; font-size: 20px; overflow-wrap: anywhere; }
+  .preview-meta { color: var(--muted); font-size: 12px; margin-bottom: 15px; }
+  .preview-empty { color: var(--muted); text-align: center; padding: 24px 5px; }
+  .footer-note { text-align: center; color: #8b89a0; font-size: 11px; margin-top: 22px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; }
+    .side { grid-template-columns: 1fr; }
+    .note-list { max-height: 420px; }
+  }
+  @media (max-width: 560px) {
+    .page { width: min(100% - 22px, 560px); padding: 20px 0 30px; }
+    .topbar { align-items: flex-start; flex-direction: column; }
+    .top-actions { width: 100%; }
+    .top-actions .btn { flex: 1; }
+    .editor, .list-panel, .preview-panel { padding: 16px; border-radius: 17px; }
+    .two-col { grid-template-columns: 1fr; gap: 0; }
+    .field textarea { min-height: 190px; }
+    .list-toolbar { flex-direction: column; }
+    .filter-select { width: 100%; }
+    .stats { gap: 7px; }
+    .stat { padding: 12px 9px; }
+    .stat strong { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">✎</div>
+      <div>
+        <h1>課堂拾光</h1>
+        <p>把每堂課的重點，好好收進自己的知識口袋。</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-soft" id="exportBtn" type="button">⬇ 匯出備份</button>
+      <button class="btn btn-soft" id="importBtn" type="button">⬆ 匯入備份</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel editor" aria-labelledby="editorHeading">
+      <div class="panel-heading">
+        <div><div class="eyebrow">YOUR CLASS NOTES</div><h2 id="editorHeading">新增一則課堂筆記</h2></div>
+        <span aria-hidden="true">📚</span>
+      </div>
+      <form id="noteForm">
+        <div class="field">
+          <label for="noteTitle">筆記標題 <span aria-hidden="true">*</span></label>
+          <input id="noteTitle" name="title" maxlength="100" placeholder="例如：普通化學－化學鍵結" required>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label for="noteSubject">課程／科目（可自動判斷）</label>
+            <input id="noteSubject" name="subject" maxlength="50" placeholder="留白時會依內容嘗試分類">
+          </div>
+          <div class="field">
+            <label for="noteDate">上課日期</label>
+            <input id="noteDate" name="date" type="date">
+          </div>
+        </div>
+        <div class="field">
+          <label for="noteChapter">章節（可自動擷取）</label>
+          <input id="noteChapter" name="chapter" maxlength="80" placeholder="例如：第三章 化學鍵結；留白時會從標題或內容擷取">
+        </div>
+        <div class="hint" id="classifyHint" aria-live="polite">輸入標題或內容後，系統會嘗試辨識科目與章節；辨識結果仍可自行修改。</div>
+        <div class="field">
+          <label for="noteTags">標籤（以逗號分隔）</label>
+          <input id="noteTags" name="tags" maxlength="120" placeholder="例如：期中考, 重要觀念, 作業">
+        </div>
+        <div class="field">
+          <label for="noteContent">課堂內容</label>
+          <textarea id="noteContent" name="content" placeholder="記下老師講解的觀念、例題、公式，或還沒弄懂的問題……"></textarea>
+        </div>
+        <div class="editor-footer">
+          <span class="hint">💡 筆記會保存在這個瀏覽器，不會上傳。</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-plain" id="clearBtn" type="button">清空欄位</button>
+            <button class="btn btn-primary" id="saveBtn" type="submit">＋ 儲存筆記</button>
+          </div>
+        </div>
+        <div class="status" id="formStatus" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <aside class="side">
+      <section class="stats" aria-label="筆記統計">
+        <div class="stat"><strong id="totalCount">0</strong><span>則筆記</span></div>
+        <div class="stat"><strong id="subjectCount">0</strong><span>門課程</span></div>
+        <div class="stat"><strong id="todayCount">0</strong><span>今日新增</span></div>
+      </section>
+
+      <section class="panel list-panel" aria-labelledby="listHeading">
+        <div class="panel-heading">
+          <div><div class="eyebrow">NOTE LIBRARY</div><h2 id="listHeading">我的筆記</h2></div>
+          <span aria-hidden="true">🗂️</span>
+        </div>
+        <div class="list-toolbar">
+          <label class="searchbox">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <span class="sr-only">搜尋筆記</span>
+            <input id="searchInput" type="search" placeholder="搜尋標題、內容或標籤…">
+          </label>
+          <select class="filter-select" id="subjectFilter" aria-label="依科目篩選">
+            <option value="">所有科目</option>
+          </select>
+          <select class="filter-select" id="chapterFilter" aria-label="依章節篩選">
+            <option value="">所有章節</option>
+          </select>
+        </div>
+        <div class="note-list" id="noteList" aria-live="polite">
+          <div class="empty"><span class="emoji">🌱</span>還沒有筆記，先記下今天的第一個重點吧！</div>
+        </div>
+        <div class="list-bottom">
+          <span class="hint" id="resultCount">顯示 0 則</span>
+          <button class="btn btn-danger" id="deleteAllBtn" type="button">清除全部筆記</button>
+        </div>
+      </section>
+
+      <section class="panel preview-panel" aria-labelledby="previewHeading">
+        <div class="panel-heading"><h2 id="previewHeading">筆記預覽</h2><span aria-hidden="true">🔎</span></div>
+        <div id="previewArea" class="preview-empty">從上方清單選擇一則筆記，就能在這裡閱讀完整內容。</div>
+      </section>
+    </aside>
+  </main>
+  <p class="footer-note">資料只儲存在目前瀏覽器的 localStorage。建議定期匯出備份，清除瀏覽資料可能會刪除筆記。</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  /* 資料管理：所有筆記只存於本機瀏覽器 */
+  const STORAGE_KEY = "class-notes-v1";
+  const $ = (id) => document.getElementById(id);
+  const form = $("noteForm");
+  const titleInput = $("noteTitle");
+  const subjectInput = $("noteSubject");
+  const chapterInput = $("noteChapter");
+  const dateInput = $("noteDate");
+  const tagsInput = $("noteTags");
+  const contentInput = $("noteContent");
+  const statusBox = $("formStatus");
+  let notes = loadNotes();
+  let editingId = null;
+  let selectedId = null;
+
+  function localDate() {
+    const d = new Date();
+    const offset = d.getTimezoneOffset();
+    return new Date(d.getTime() - offset * 60000).toISOString().slice(0, 10);
+  }
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.filter(n => n && typeof n.id === "string") : [];
+    } catch (e) { return []; }
+  }
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+      return true;
+    } catch (e) {
+      showStatus("儲存空間不足或瀏覽器禁止本機儲存，請先匯出備份。", true);
+      return false;
+    }
+  }
+  function showStatus(message, isError = false) {
+    statusBox.textContent = message;
+    statusBox.classList.toggle("error", isError);
+  }
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, ch => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[ch]));
+  }
+  function formatDate(value) {
+    if (!value) return "未設定日期";
+    const parts = value.split("-");
+    return parts.length === 3 ? `${parts[0]}/${parts[1]}/${parts[2]}` : value;
+  }
+  /* 自動分類：使用標題與內容中的明確關鍵字，不將不確定結果偽裝成確定分類 */
+  const subjectRules = [
+    { name: "普通化學", words: ["化學鍵", "酸鹼", "氧化還原", "莫耳", "莫耳數", "化學平衡", "熱化學", "週期表", "電子組態", "化學反應", "沉澱", "溶解度"] },
+    { name: "有機化學", words: ["親核", "親電", "取代反應", "消去反應", "烯烴", "炔烴", "芳香族", "立體化學", "官能基", "醛", "酮", "酯化", "格里納"] },
+    { name: "分析化學", words: ["滴定", "吸光度", "比耳定律", "層析", "色譜", "光譜", "電位法", "檢量線", "檢出極限", "ICP", "AAS", "UV-Vis", "NMR", "MALDI"] },
+    { name: "物理化學", words: ["熱力學", "熵", "焓", "內能", "吉布斯", "亥姆霍茲", "理想氣體", "凡得瓦", "量子數", "波函數", "配分函數", "統計力學", "動力學"] },
+    { name: "無機化學", words: ["配位", "晶體場", "配位化合物", "金屬錯合物", "有機金屬", "軌域", "群論", "點群", "氧化態", "金屬酵素"] },
+    { name: "生物學", words: ["細胞", "DNA", "RNA", "蛋白質", "酵素", "基因", "光合作用", "細胞呼吸", "演化", "生態"] },
+    { name: "物理", words: ["牛頓", "力矩", "電場", "磁場", "電流", "電壓", "電磁", "光學", "波動", "動量", "加速度"] },
+    { name: "數學", words: ["微積分", "導數", "積分", "矩陣", "行列式", "向量", "微分方程", "機率", "統計", "特徵值"] },
+    { name: "程式設計", words: ["Python", "JavaScript", "HTML", "CSS", "程式碼", "演算法", "資料結構", "迴圈", "函式", "變數"] },
+    { name: "歷史", words: ["朝代", "革命", "戰爭", "史料", "殖民", "帝國", "歷史事件"] },
+    { name: "地理", words: ["地形", "氣候", "人口分布", "板塊", "地震", "河流", "地圖"] },
+    { name: "英文", words: ["文法", "時態", "英文單字", "閱讀測驗", "作文", "片語", "英語"] }
+  ];
+  function inferSubject(text) {
+    const source = text.toLocaleLowerCase();
+    let best = { name: "", score: 0 };
+    subjectRules.forEach(rule => {
+      const score = rule.words.reduce((sum, word) => sum + (source.includes(word.toLocaleLowerCase()) ? Math.max(1, word.length > 3 ? 2 : 1) : 0), 0);
+      if (score > best.score) best = { name: rule.name, score };
+    });
+    return best.score >= 2 ? best.name : "";
+  }
+  function inferChapter(text) {
+    const source = String(text || "").replace(/\s+/g, " ");
+    const patterns = [
+      /(第\s*[一二三四五六七八九十百零〇\d]+\s*章(?:\s*[^，。；;\n]{0,24})?)/,
+      /(第\s*[一二三四五六七八九十百零〇\d]+\s*節(?:\s*[^，。；;\n]{0,24})?)/,
+      /(第\s*[一二三四五六七八九十百零〇\d]+\s*單元(?:\s*[^，。；;\n]{0,24})?)/,
+      /(Chapter\s+\d+(?:\s*[:：.-]?\s*[^，。；;\n]{0,24})?)/i,
+      /(Unit\s+\d+(?:\s*[:：.-]?\s*[^，。；;\n]{0,24})?)/i
+    ];
+    for (const pattern of patterns) {
+      const match = source.match(pattern);
+      if (match) return match[1].trim().slice(0, 80);
+    }
+    return "";
+  }
+  function updateAutoHints() {
+    const source = `${titleInput.value} ${contentInput.value}`;
+    const detectedSubject = inferSubject(source);
+    const detectedChapter = inferChapter(source);
+    const subjectWasAuto = !subjectInput.value.trim();
+    const chapterWasAuto = !chapterInput.value.trim();
+    if (subjectWasAuto && detectedSubject) subjectInput.value = detectedSubject;
+    if (chapterWasAuto && detectedChapter) chapterInput.value = detectedChapter;
+    const messages = [];
+    if (detectedSubject) messages.push(`科目辨識：${detectedSubject}`);
+    else if (subjectWasAuto) messages.push("科目尚無明確線索");
+    if (detectedChapter) messages.push(`章節擷取：${detectedChapter}`);
+    else if (chapterWasAuto) messages.push("未找到明確章節格式");
+    $("classifyHint").textContent = messages.join("｜") + "。可直接修改欄位。";
+  }
+  function resetForm() {
+    form.reset();
+    dateInput.value = localDate();
+    chapterInput.value = "";
+    $("classifyHint").textContent = "輸入標題或內容後，系統會嘗試辨識科目與章節；辨識結果仍可自行修改。";
+    editingId = null;
+    $("editorHeading").textContent = "新增一則課堂筆記";
+    $("saveBtn").textContent = "＋ 儲存筆記";
+    showStatus("");
+  }
+  function updateStats() {
+    $("totalCount").textContent = notes.length;
+    $("subjectCount").textContent = new Set(notes.map(n => (n.subject || "").trim()).filter(Boolean)).size;
+    $("todayCount").textContent = notes.filter(n => n.createdDate === localDate()).length;
+  }
+  function renderFilters() {
+    const select = $("subjectFilter");
+    const oldValue = select.value;
+    const subjects = [...new Set(notes.map(n => (n.subject || "").trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, "zh-Hant"));
+    select.innerHTML = '<option value="">所有科目</option>' + subjects.map(s => `<option value="${escapeHTML(s)}">${escapeHTML(s)}</option>`).join("");
+    select.value = subjects.includes(oldValue) ? oldValue : "";
+    const chapterSelect = $("chapterFilter");
+    const oldChapter = chapterSelect.value;
+    const chapters = [...new Set(notes.map(n => (n.chapter || "").trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, "zh-Hant"));
+    chapterSelect.innerHTML = '<option value="">所有章節</option>' + chapters.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join("");
+    chapterSelect.value = chapters.includes(oldChapter) ? oldChapter : "";
+  }
+  function renderList() {
+    const q = $("searchInput").value.trim().toLocaleLowerCase();
+    const subject = $("subjectFilter").value;
+    const chapter = $("chapterFilter").value;
+    const filtered = [...notes].filter(n => {
+      const haystack = [n.title, n.subject, n.chapter, n.content, ...(n.tags || [])].join(" ").toLocaleLowerCase();
+      return (!q || haystack.includes(q)) && (!subject || n.subject === subject) && (!chapter || n.chapter === chapter);
+    }).sort((a,b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+    const list = $("noteList");
+    $("resultCount").textContent = `顯示 ${filtered.length} 則`;
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty"><span class="emoji">📝</span>${notes.length ? "找不到符合條件的筆記，試試其他關鍵字。" : "還沒有筆記，先記下今天的第一個重點吧！"}</div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(n => `
+      <button type="button" class="note-card ${n.id === selectedId ? "active" : ""}" data-id="${escapeHTML(n.id)}" aria-pressed="${n.id === selectedId}">
+        <div class="note-card-top"><h3>${escapeHTML(n.title)}</h3><span class="note-date">${escapeHTML(formatDate(n.date))}</span></div>
+        <div class="hint">${escapeHTML(n.subject || "待分類")} · ${escapeHTML(n.chapter || "未標示")}</div>
+        <p class="note-preview">${escapeHTML((n.content || "尚未填寫內容").slice(0, 90))}${(n.content || "").length > 90 ? "…" : ""}</p>
+        <div>${(n.tags || []).slice(0, 4).map(t => `<span class="tag">${escapeHTML(t)}</span>`).join("")}</div>
+      </button>`).join("");
+    list.querySelectorAll(".note-card").forEach(card => card.addEventListener("click", () => selectNote(card.dataset.id)));
+  }
+  function selectNote(id) {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    selectedId = id;
+    $("previewArea").className = "";
+    $("previewArea").innerHTML = `
+      <h3 class="preview-title">${escapeHTML(note.title)}</h3>
+      <div class="preview-meta">${escapeHTML(note.subject || "待分類")} ・ ${escapeHTML(note.chapter || "章節未標示")} ・ ${escapeHTML(formatDate(note.date))}</div>
+      <div>${(note.tags || []).map(t => `<span class="tag">${escapeHTML(t)}</span>`).join("")}</div>
+      <div class="preview-content">${escapeHTML(note.content || "（尚未填寫內容）")}</div>
+      <div class="editor-footer">
+        <span class="hint">最後更新：${escapeHTML(new Date(note.updatedAt).toLocaleString("zh-TW"))}</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-soft" id="editNoteBtn" type="button">編輯</button>
+          <button class="btn btn-danger" id="deleteNoteBtn" type="button">刪除</button>
+        </div>
+      </div>`;
+    $("editNoteBtn").addEventListener("click", () => editNote(id));
+    $("deleteNoteBtn").addEventListener("click", () => deleteNote(id));
+    renderList();
+  }
+  function editNote(id) {
+    const n = notes.find(item => item.id === id);
+    if (!n) return;
+    editingId = id;
+    titleInput.value = n.title;
+    subjectInput.value = n.subject || "";
+    chapterInput.value = n.chapter || "";
+    dateInput.value = n.date || localDate();
+    tagsInput.value = (n.tags || []).join(", ");
+    contentInput.value = n.content || "";
+    $("editorHeading").textContent = "編輯課堂筆記";
+    $("saveBtn").textContent = "✓ 更新筆記";
+    showStatus("正在編輯這則筆記。");
+    titleInput.focus();
+    $("noteForm").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function deleteNote(id) {
+    const n = notes.find(item => item.id === id);
+    if (!n || !confirm(`確定刪除「${n.title}」嗎？`)) return;
+    notes = notes.filter(item => item.id !== id);
+    if (!persist()) return;
+    if (selectedId === id) {
+      selectedId = null;
+      $("previewArea").className = "preview-empty";
+      $("previewArea").textContent = "從上方清單選擇一則筆記，就能在這裡閱讀完整內容。";
+    }
+    if (editingId === id) resetForm();
+    refresh();
+  }
+  function refresh() {
+    updateStats();
+    renderFilters();
+    renderList();
+    if (selectedId && notes.some(n => n.id === selectedId)) {
+      // 重繪清單時保留預覽，不重設使用者正在閱讀的內容。
+    }
+  }
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const title = titleInput.value.trim();
+    if (!title) {
+      showStatus("請先輸入筆記標題。", true);
+      titleInput.focus();
+      return;
+    }
+    const now = new Date().toISOString();
+    const old = editingId ? notes.find(n => n.id === editingId) : null;
+    const note = {
+      id: editingId || (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+      title,
+      subject: subjectInput.value.trim() || inferSubject(`${title} ${contentInput.value}`) || "待分類",
+      chapter: chapterInput.value.trim() || inferChapter(`${title} ${contentInput.value}`) || "未標示",
+      date: dateInput.value || localDate(),
+      tags: [...new Set(tagsInput.value.split(",").map(t => t.trim()).filter(Boolean))],
+      content: contentInput.value.trim(),
+      createdDate: old ? old.createdDate : localDate(),
+      updatedAt: now
+    };
+    if (old) notes = notes.map(n => n.id === editingId ? note : n);
+    else notes.unshift(note);
+    if (!persist()) return;
+    selectedId = note.id;
+    refresh();
+    selectNote(note.id);
+    resetForm();
+    showStatus(old ? "筆記已更新！" : "筆記已儲存！", false);
+  });
+  $("clearBtn").addEventListener("click", () => {
+    resetForm();
+    titleInput.focus();
+  });
+  $("searchInput").addEventListener("input", renderList);
+  $("subjectFilter").addEventListener("change", renderList);
+  $("chapterFilter").addEventListener("change", renderList);
+  titleInput.addEventListener("input", updateAutoHints);
+  contentInput.addEventListener("input", updateAutoHints);
+  $("deleteAllBtn").addEventListener("click", () => {
+    if (!notes.length) { showStatus("目前沒有可清除的筆記。"); return; }
+    if (!confirm(`確定清除全部 ${notes.length} 則筆記？此動作無法復原，建議先匯出備份。`)) return;
+    notes = [];
+    selectedId = null;
+    if (!persist()) return;
+    $("previewArea").className = "preview-empty";
+    $("previewArea").textContent = "從上方清單選擇一則筆記，就能在這裡閱讀完整內容。";
+    resetForm();
+    refresh();
+    showStatus("全部筆記已清除。");
+  });
+  $("exportBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), notes }, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `class-notes-backup-${localDate()}.json`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    showStatus("備份檔已準備下載。");
+  });
+  $("importBtn").addEventListener("click", () => $("importFile").click());
+  $("importFile").addEventListener("change", async (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      const incoming = Array.isArray(parsed) ? parsed : parsed.notes;
+      if (!Array.isArray(incoming)) throw new Error("format");
+      const valid = incoming.filter(n => n && typeof n.title === "string").map(n => ({
+        id: typeof n.id === "string" ? n.id : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        title: n.title.slice(0,100), subject: typeof n.subject === "string" ? n.subject.slice(0,50) : "",
+        date: typeof n.date === "string" ? n.date : localDate(),
+        chapter: typeof n.chapter === "string" ? n.chapter.slice(0,80) : "未標示",
+        tags: Array.isArray(n.tags) ? n.tags.filter(t => typeof t === "string").slice(0,30) : [],
+        content: typeof n.content === "string" ? n.content : "",
+        createdDate: typeof n.createdDate === "string" ? n.createdDate : localDate(),
+        updatedAt: typeof n.updatedAt === "string" ? n.updatedAt : new Date().toISOString()
+      }));
+      if (!valid.length) throw new Error("empty");
+      if (!confirm(`備份中有 ${valid.length} 則筆記。按「確定」以匯入並合併（同 ID 會以匯入內容覆蓋）。`)) return;
+      const map = new Map(notes.map(n => [n.id, n]));
+      valid.forEach(n => map.set(n.id, n));
+      notes = [...map.values()];
+      if (!persist()) return;
+      refresh();
+      showStatus(`成功匯入 ${valid.length} 則筆記。`);
+    } catch (e) {
+      showStatus("無法讀取這個備份檔，請確認它是本工具匯出的 JSON。", true);
+    } finally {
+      event.target.value = "";
+    }
+  });
+
+  dateInput.value = localDate();
+  refresh();
+})();
+</script>
+</body>
+</html>
